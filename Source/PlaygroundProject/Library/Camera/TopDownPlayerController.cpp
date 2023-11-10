@@ -2,7 +2,9 @@
 
 
 #include "TopDownPlayerController.h"
- 
+
+#include "PlaygroundProject/Library/Characters/SimpleCharacter.h"
+
 #include "GameFramework/Pawn.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "NiagaraSystem.h"
@@ -10,8 +12,9 @@
 #include "Engine/World.h"
 #include "EnhancedInputComponent.h"
 #include "InputActionValue.h"
-#include "EnhancedInputSubsystems.h"
+#include "EnhancedInputSubsystems.h" 
 #include "Engine/LocalPlayer.h"
+#include <CharacterAIController.h>
 
 DEFINE_LOG_CATEGORY(TopDownPlayerController);
 
@@ -48,79 +51,138 @@ void ATopDownPlayerController::SetupInputComponent()
 		EnhancedInputComponent->BindAction(SetDestinationClickAction, ETriggerEvent::Triggered, this, &ATopDownPlayerController::OnSetDestinationTriggered);
 		EnhancedInputComponent->BindAction(SetDestinationClickAction, ETriggerEvent::Completed, this, &ATopDownPlayerController::OnSetDestinationReleased);
 		EnhancedInputComponent->BindAction(SetDestinationClickAction, ETriggerEvent::Canceled, this, &ATopDownPlayerController::OnSetDestinationReleased);
-
-		// Setup touch input events
-		EnhancedInputComponent->BindAction(SetDestinationTouchAction, ETriggerEvent::Started, this, &ATopDownPlayerController::OnInputStarted);
-		EnhancedInputComponent->BindAction(SetDestinationTouchAction, ETriggerEvent::Triggered, this, &ATopDownPlayerController::OnTouchTriggered);
-		EnhancedInputComponent->BindAction(SetDestinationTouchAction, ETriggerEvent::Completed, this, &ATopDownPlayerController::OnTouchReleased);
-		EnhancedInputComponent->BindAction(SetDestinationTouchAction, ETriggerEvent::Canceled, this, &ATopDownPlayerController::OnTouchReleased);
-	}
-	else
-	{
-		UE_LOG(TopDownPlayerController, Error, TEXT("'%s' Failed to find an Enhanced Input Component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
 	}
 }
 
 void ATopDownPlayerController::OnInputStarted()
 {
-	StopMovement();
+	
+	FHitResult HitResult;
+	bool hasHit = GetHitResultUnderCursor(ECollisionChannel::ECC_Pawn, false, HitResult);
+	if (!hasHit)
+		return;
+	if (TrySelectCharacter(HitResult)) {
+		return;
+	}
+	else if (TryMoveCharacter(HitResult)) {
+
+	}
+	return;
+	// If we hit a surface, cache the location
+	/*if (hitPawn)
+	{
+		AActor* actor = Hit.GetActor();
+		if (actor != nullptr) {
+			UE_LOG(LogTemp, Warning, TEXT("Actor is not null, %s"), *FString(actor->GetClass()->GetDisplayNameText().ToString()));
+			ASimpleCharacter* charcater = Cast<ASimpleCharacter>(actor);
+			if (actor->IsA(ASimpleCharacter::StaticClass()) || dynamic_cast<const ASimpleCharacter*>(actor) != nullptr || charcater != nullptr) {
+				UE_LOG(LogTemp, Warning, TEXT("Hit actor of type ASimpleCharacter"));
+				if (CharacterController != nullptr) {
+					UE_LOG(LogTemp, Warning, TEXT("Posessing pawn ASimpleCharacter"));
+					CharacterController->Possess(Cast<APawn>(actor));
+				}
+			}
+		}
+
+		UE_LOG(LogTemp, Warning, TEXT("select successful"));
+	}*/
+}
+
+bool ATopDownPlayerController::TryMoveCharacter(FHitResult hit) {
+
+	if (ControlledCharacter != nullptr) { 
+		StopMovement();
+		//FollowTime += GetWorld()->GetDeltaSeconds();
+		CachedDestination = hit.Location;
+		FVector WorldDirection = (CachedDestination - ControlledCharacter->GetActorLocation()).GetSafeNormal();
+		ControlledCharacter->AddMovementInput(WorldDirection, 1.0, false);
+		UAIBlueprintHelperLibrary::SimpleMoveToLocation(ControlledCharacter->GetController(), CachedDestination);
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(ControlledCharacter->GetController(), FXCursor, CachedDestination, FRotator::ZeroRotator, FVector(1.f, 1.f, 1.f), true, true, ENCPoolMethod::None, true);
+	}
+	else {
+		UE_LOG(LogTemp, Warning, TEXT("ControlledCharacter is not selected. Nothing to move move."));
+		return false;
+	}
+
+	return true;
+}
+
+bool ATopDownPlayerController::TrySelectCharacter(FHitResult hit) {
+	 
+	UE_LOG(LogTemp, Warning, TEXT("Selecting Pawn"));
+	AActor* actor = hit.GetActor();
+	if (actor != nullptr) {
+		FString actorType = actor->GetClass()->GetDisplayNameText().ToString();
+		UE_LOG(LogTemp, Warning, TEXT("Hit actor of type: %s"), *FString(actorType));
+		if (actor->IsA(ASimpleCharacter::StaticClass())) {
+			ControlledCharacter = Cast<ASimpleCharacter>(actor);
+			UE_LOG(LogTemp, Warning, TEXT("Selecting %s"), *FString(actorType));
+			return true;
+		}
+		else {
+			UE_LOG(LogTemp, Warning, TEXT("CharacterController is null, cant posses: %s"), *FString(actorType));
+			return false;
+		}
+	}
+	else {
+		UE_LOG(LogTemp, Warning, TEXT("Hit actor is null, cant select it!"));
+		return false;
+	}
+
+	return true;
 }
 
 // Triggered every frame when the input is held down
 void ATopDownPlayerController::OnSetDestinationTriggered()
 {
 	// We flag that the input is being pressed
-	FollowTime += GetWorld()->GetDeltaSeconds();
+	//FollowTime += GetWorld()->GetDeltaSeconds();
 
 	// We look for the location in the world where the player has pressed the input
-	FHitResult Hit;
-	bool bHitSuccessful = false;
-	if (bIsTouch)
-	{
-		bHitSuccessful = GetHitResultUnderFinger(ETouchIndex::Touch1, ECollisionChannel::ECC_Visibility, true, Hit);
-	}
-	else
-	{
-		bHitSuccessful = GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, true, Hit);
-	}
+	//FHitResult Hit;
+	//bool bHitSuccessful = GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, true, Hit);
 
 	// If we hit a surface, cache the location
-	if (bHitSuccessful)
-	{
-		CachedDestination = Hit.Location;
-	}
+	//if (bHitSuccessful)
+	//{
+		//CachedDestination = Hit.Location;
+		/*AActor* actor = Hit.GetActor();
+		if (actor != nullptr) {
+			if (actor->IsA(ASimpleCharacter::StaticClass()) || dynamic_cast<const ASimpleCharacter*>(actor) != nullptr) {
+				UE_LOG(LogTemp, Warning, TEXT("Hit actor of type ASimpleCharacter"));
+				if (CharacterController != nullptr) {
+					UE_LOG(LogTemp, Warning, TEXT("Posessing pawn ASimpleCharacter"));
+					CharacterController->Possess(Cast<APawn>(actor));
+				}
+			}
+		}*/
 
-	// Move towards mouse pointer or touch
-	APawn* ControlledPawn = GetPawn();
-	if (ControlledPawn != nullptr)
-	{
-		FVector WorldDirection = (CachedDestination - ControlledPawn->GetActorLocation()).GetSafeNormal();
-		//ControlledPawn->AddMovementInput(WorldDirection, 1.0, false);
-	}
+		//UE_LOG(LogTemp, Warning, TEXT("hit successful")); 
+
+	//}
+
+	//if (CharacterController != nullptr) {
+	//	// Move towards mouse pointer or touch
+	//	APawn* ControlledPawn = CharacterController->GetPawn();
+	//	if (ControlledPawn != nullptr)
+	//	{
+	//		FVector WorldDirection = (CachedDestination - ControlledPawn->GetActorLocation()).GetSafeNormal();
+	//		ControlledPawn->AddMovementInput(WorldDirection, 1.0, false);
+	//	}
+	//}
 }
 
 void ATopDownPlayerController::OnSetDestinationReleased()
 {
 	// If it was a short press
-	if (FollowTime <= ShortPressThreshold)
+	//if (FollowTime <= ShortPressThreshold)
 	{
-		// We move there and spawn some particles
-		//UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CachedDestination);
-		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, FXCursor, CachedDestination, FRotator::ZeroRotator, FVector(1.f, 1.f, 1.f), true, true, ENCPoolMethod::None, true);
+		if (ControlledCharacter != nullptr) {
+			// We move there and spawn some particles  
+			//UAIBlueprintHelperLibrary::SimpleMoveToLocation(ControlledCharacter->GetController(), CachedDestination);
+			//UNiagaraFunctionLibrary::SpawnSystemAtLocation(ControlledCharacter->GetController(), FXCursor, CachedDestination, FRotator::ZeroRotator, FVector(1.f, 1.f, 1.f), true, true, ENCPoolMethod::None, true);
+		}
 	}
 
-	FollowTime = 0.f;
-}
-
-// Triggered every frame when the input is held down
-void ATopDownPlayerController::OnTouchTriggered()
-{
-	bIsTouch = true;
-	OnSetDestinationTriggered();
-}
-
-void ATopDownPlayerController::OnTouchReleased()
-{
-	bIsTouch = false;
-	OnSetDestinationReleased();
+	//FollowTime = 0.f;
 }

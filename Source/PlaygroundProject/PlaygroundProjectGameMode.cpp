@@ -9,10 +9,10 @@
 APlaygroundProjectGameMode::APlaygroundProjectGameMode()
 {
 	// use our custom PlayerController class
-	PlayerControllerClass = APlaygroundProjectPlayerController::StaticClass();
+	//PlayerControllerClass = APlaygroundProjectPlayerController::StaticClass();
 
 	// set default pawn class to our Blueprinted character
-
+	 
 	//NICE: Lookup blueprint that is not instatiated
 	//static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT("/Game/TopDown/Blueprints/BP_TopDownCharacter")); //Original Code
 	//static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT("/Game/TopDown/Blueprints/BP_CameraPawn")); 

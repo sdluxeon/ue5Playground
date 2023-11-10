@@ -10,6 +10,7 @@
 class UNiagaraSystem;
 class UInputMappingContext;
 class UInputAction;
+class ASimpleCharacter;
 
 DECLARE_LOG_CATEGORY_EXTERN(TopDownPlayerController, Log, All);
 
@@ -40,8 +41,8 @@ public:
 	UInputAction* SetDestinationClickAction;
 
 	/** Jump Input Action */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* SetDestinationTouchAction;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Input, meta = (AllowPrivateAccess = "true"))
+	ASimpleCharacter* ControlledCharacter;
 
 protected:
 	/** True if the controlled character should navigate to the mouse cursor. */
@@ -56,12 +57,14 @@ protected:
 	void OnInputStarted();
 	void OnSetDestinationTriggered();
 	void OnSetDestinationReleased();
-	void OnTouchTriggered();
-	void OnTouchReleased();
 
 private:
-	FVector CachedDestination;
 
-	bool bIsTouch; // Is it a touch device
+	bool TrySelectCharacter(FHitResult hit);
+
+	bool TryMoveCharacter(FHitResult hit);
+
+	FVector CachedDestination;
+	 
 	float FollowTime; // For how long it has been pressed
 };
