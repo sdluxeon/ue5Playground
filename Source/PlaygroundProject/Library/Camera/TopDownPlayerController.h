@@ -24,6 +24,8 @@ class PLAYGROUNDPROJECT_API ATopDownPlayerController : public APlayerController
 public:
 	ATopDownPlayerController();
 
+	virtual void Tick(float DeltaTime) override;
+
 	/** Time Threshold to know if it was a short press */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
 	float ShortPressThreshold;
@@ -36,11 +38,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputMappingContext* DefaultMappingContext;
 
-	/** Jump Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* SetDestinationClickAction;
 
-	/** Jump Input Action */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* EnableCameraFollowAction; 
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Input, meta = (AllowPrivateAccess = "true"))
 	ASimpleCharacter* ControlledCharacter;
 
@@ -64,7 +67,10 @@ private:
 
 	bool TryMoveCharacter(FHitResult hit);
 
+	void FollowCharacter();
+	void StopFollowingCharacter(); 
+	bool shouldCameraFollow;
+
 	FVector CachedDestination;
 	 
-	float FollowTime; // For how long it has been pressed
 };

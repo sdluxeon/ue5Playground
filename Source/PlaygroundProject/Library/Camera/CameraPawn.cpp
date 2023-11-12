@@ -122,6 +122,11 @@ void ACameraPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 	}
 }
 
+void ACameraPawn::MoveToPosition(FVector targetLocation)
+{
+	TargetLocation = targetLocation;
+}
+
 void ACameraPawn::Forward()
 { 
 	TargetLocation = (SpringArmComponent->GetForwardVector() *  MoveSpeed) + TargetLocation;

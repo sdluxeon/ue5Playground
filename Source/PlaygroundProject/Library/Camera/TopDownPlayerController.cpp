@@ -15,6 +15,7 @@
 #include "EnhancedInputSubsystems.h" 
 #include "Engine/LocalPlayer.h"
 #include <CharacterAIController.h>
+#include <CameraPawn.h>
 
 DEFINE_LOG_CATEGORY(TopDownPlayerController);
 
@@ -23,7 +24,25 @@ ATopDownPlayerController::ATopDownPlayerController()
 	bShowMouseCursor = true;
 	DefaultMouseCursor = EMouseCursor::Default;
 	CachedDestination = FVector::ZeroVector;
-	FollowTime = 0.f;
+}
+
+void ATopDownPlayerController::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	if (shouldCameraFollow) {
+		APawn* ControlledPawn = GetPawn();
+		if (ControlledPawn != nullptr) {
+			ACameraPawn* cameraPawn = Cast<ACameraPawn>(ControlledPawn);
+			if (cameraPawn != nullptr) {
+				if(ControlledCharacter!=nullptr)
+				cameraPawn->MoveToPosition(ControlledCharacter->GetTargetLocation());
+			}
+			else {
+				UE_LOG(LogTemp, Warning, TEXT("ControlledPawn is not ACameraPawn. Can not follow character."));
+			}
+		}
+	}
 }
 
 void ATopDownPlayerController::BeginPlay()
@@ -51,6 +70,10 @@ void ATopDownPlayerController::SetupInputComponent()
 		EnhancedInputComponent->BindAction(SetDestinationClickAction, ETriggerEvent::Triggered, this, &ATopDownPlayerController::OnSetDestinationTriggered);
 		EnhancedInputComponent->BindAction(SetDestinationClickAction, ETriggerEvent::Completed, this, &ATopDownPlayerController::OnSetDestinationReleased);
 		EnhancedInputComponent->BindAction(SetDestinationClickAction, ETriggerEvent::Canceled, this, &ATopDownPlayerController::OnSetDestinationReleased);
+
+
+		EnhancedInputComponent->BindAction(EnableCameraFollowAction, ETriggerEvent::Triggered, this, &ATopDownPlayerController::FollowCharacter);
+		EnhancedInputComponent->BindAction(EnableCameraFollowAction, ETriggerEvent::Completed, this, &ATopDownPlayerController::StopFollowingCharacter);
 	}
 }
 
@@ -105,6 +128,16 @@ bool ATopDownPlayerController::TryMoveCharacter(FHitResult hit) {
 	}
 
 	return true;
+}
+
+void ATopDownPlayerController::FollowCharacter()
+{
+	shouldCameraFollow = true;
+}
+
+void ATopDownPlayerController::StopFollowingCharacter()
+{
+	shouldCameraFollow = false;
 }
 
 bool ATopDownPlayerController::TrySelectCharacter(FHitResult hit) {

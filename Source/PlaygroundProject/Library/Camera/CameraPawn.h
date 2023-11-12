@@ -68,8 +68,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	UInputAction* RotateHorizontalAction; 
 
-protected:
+	UFUNCTION()
+	void MoveToPosition(FVector targetLocation);
 
+protected:
+	 
 	UFUNCTION()
 	void Forward();
 
