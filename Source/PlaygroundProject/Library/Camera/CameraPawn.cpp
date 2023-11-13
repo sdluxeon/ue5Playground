@@ -21,7 +21,7 @@ ACameraPawn::ACameraPawn()
 
 	SpringArmComponent = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArmComponent"));
 	SpringArmComponent->SetupAttachment(RootComponent);
-	SpringArmComponent->TargetArmLength = 2000.0f;
+	SpringArmComponent->TargetArmLength = 1500.0f;
 	SpringArmComponent->bDoCollisionTest = false;
 	SpringArmComponent->bUsePawnControlRotation = false;
 
@@ -38,7 +38,7 @@ void ACameraPawn::BeginPlay()
 	TargetZoom = 3000.0f;
 
 	const FRotator Rotation = SpringArmComponent->GetRelativeRotation();
-	TargetRotation = FRotator(Rotation.Pitch + -50, Rotation.Yaw, 0.0f);
+	TargetRotation = FRotator(Rotation.Pitch + -45, Rotation.Yaw, 0.0f);
 
 	BindToInput();
 }
@@ -207,7 +207,7 @@ void ACameraPawn::RotateVertical(const FInputActionValue& Value)
 	if (AxisValue == 0.0f) {
 		return;
 	}
-	if (CanRotate) {
+	if (CanRotate && VerticalRotationEnabled) {
 		TargetRotation = UKismetMathLibrary::ComposeRotators(TargetRotation, FRotator(AxisValue * RotationAxisSensitivity, 0.0f, 0.0f));
 	}
 }

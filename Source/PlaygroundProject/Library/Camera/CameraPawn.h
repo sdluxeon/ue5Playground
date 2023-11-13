@@ -136,6 +136,9 @@ protected:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Settings|Camera")
 	float RotateSpeed = 300.0f;
 
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Settings|Camera")
+	bool VerticalRotationEnabled = false;
+
 
 private:
 
