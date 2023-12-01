@@ -112,7 +112,7 @@ void ATopDownPlayerController::OnInputStarted()
 }
 
 bool ATopDownPlayerController::TryMoveCharacter(FHitResult hit) {
-
+	 
 	if (ControlledCharacter != nullptr) { 
 		StopMovement();
 		//FollowTime += GetWorld()->GetDeltaSeconds();

@@ -21,7 +21,7 @@ ACameraPawn::ACameraPawn()
 
 	SpringArmComponent = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArmComponent"));
 	SpringArmComponent->SetupAttachment(RootComponent);
-	SpringArmComponent->TargetArmLength = 1500.0f;
+	SpringArmComponent->TargetArmLength = 500.0f;
 	SpringArmComponent->bDoCollisionTest = false;
 	SpringArmComponent->bUsePawnControlRotation = false;
 
